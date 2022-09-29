@@ -28,19 +28,19 @@ def isValidCell(maze, row, col, dir="start-goal"):
     if maze[row][col] == "b":
         return False
     
-    # If cell is already added to visited cells matrix
+    # If cell is already added to visited cells set
     if dir == "start-goal":
-        if visitedMatrixStart[row][col]:
+        if visitedSetStart.intersection({(row, col)}):
             return False
     else: # goal-start
-        if visitedMatrixGoal[row][col]:
+        if visitedSetGoal.intersection({(row, col)}):
             return False
 
     # If not none of the above situations arise, the cell can be added!
     return True
 
 # Our main BD BFS function
-def doesPathExist(maze):
+def doesPathExist(maze, lastCell):
 
     # Queues to keep track of the BFS
     queueStart = deque()
@@ -60,18 +60,18 @@ def doesPathExist(maze):
     queueStart.append((0, 0))
 
     # Then make sure we are marking the start point as visited
-    visitedMatrixStart[0][0] = True
+    # visitedMatrixStart[0][0] = True
     visitedSetStart.add((0, 0))
 
     ####################
     # For GOAL -> START
     ####################
     # Append the start cell coordinates to the queue
-    queueGoal.append((maxRows - 1, maxCols - 1))
+    queueGoal.append((lastCell[0], lastCell[1]))
 
     # Then make sure we are marking the start point as visited
-    visitedMatrixGoal[maxRows - 1][maxCols -1] = True
-    visitedSetGoal.add((maxRows - 1, maxCols - 1))
+    # visitedMatrixGoal[maxRows - 1][maxCols -1] = True
+    visitedSetGoal.add((lastCell[0], lastCell[1]))
 
     # We want to continue checking until we have
     # (1) Checked all children from either side OR
@@ -91,7 +91,7 @@ def doesPathExist(maze):
 
             if isValidCell(maze, xChildStart, yChildStart, "start-goal"):
                 queueStart.append((xChildStart, yChildStart))
-                visitedMatrixStart[xChildStart][yChildStart] = True
+                # visitedMatrixStart[xChildStart][yChildStart] = True
                 visitedSetStart.add((xChildStart, yChildStart))
 
         # GOAL -> START
@@ -107,7 +107,7 @@ def doesPathExist(maze):
 
             if isValidCell(maze, xChildGoal, yChildGoal, "goal-start"):
                 queueGoal.append((xChildGoal, yChildGoal))
-                visitedMatrixGoal[xChildGoal][yChildGoal] = True
+                # visitedMatrixGoal[xChildGoal][yChildGoal] = True
                 visitedSetGoal.add((xChildGoal, yChildGoal))
 
         if isCommonCellAvaialable():
@@ -117,11 +117,11 @@ def doesPathExist(maze):
     return False
 
 # This will be the entry point from maze.py
-def enterTheDragon(maze, numRows, numCols):
+def enterTheDragon(maze, numRows, numCols, lastCell):
     
     # Some initializations
-    global visitedMatrixStart
-    global visitedMatrixGoal
+    # global visitedMatrixStart
+    # global visitedMatrixGoal
     global visitedSetStart
     global visitedSetGoal
     global maxRows, maxCols
@@ -137,8 +137,8 @@ def enterTheDragon(maze, numRows, numCols):
         print("A non-positive number of rows or columns was passed!")
         return False
 
-    visitedMatrixStart = [[False for _ in range(numCols)] for _ in range(numRows)] # Will indicate to us which cells have been visited
-    visitedMatrixGoal = [[False for _ in range(numCols)] for _ in range(numRows)] # Will indicate to us which cells have been visited
+    # visitedMatrixStart = [[False for _ in range(numCols)] for _ in range(numRows)] # Will indicate to us which cells have been visited
+    # visitedMatrixGoal = [[False for _ in range(numCols)] for _ in range(numRows)] # Will indicate to us which cells have been visited
 
     visitedSetStart = []
     visitedSetStart = set(visitedSetStart)
@@ -147,7 +147,7 @@ def enterTheDragon(maze, numRows, numCols):
     visitedSetGoal = set(visitedSetGoal)
 
     # Do a BD BFS from START -> GOAL and simultaneously from GOAL -> START
-    if doesPathExist(maze):
+    if doesPathExist(maze, lastCell):
         print("A path exists, so one can reach the goal from the start!")
         return True
     else:
