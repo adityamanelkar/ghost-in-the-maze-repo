@@ -71,7 +71,7 @@ for _ in range(10):
     blkMaze(maze)
 
     # Check if the maze is legit using BD-BFS
-    if isMazeLegit(maze, numRows, numCols):
+    if bdbfs.enterTheDragon(maze, numRows, numCols, (numRows - 1, numCols - 1)):
         print(Fore.BLUE + "Everything is good with the world!\nSo saving a CSV file for future reference")
         # Since legit maze, we want to save it in a CSV
         csvops.generateCsv(maze, fileno)
