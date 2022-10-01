@@ -7,12 +7,12 @@ CSV file creation - https://www.pythontutorial.net/python-basics/python-write-cs
 
 """
 
-basePath = "D:\Project\intro_to_ai\ghost-in-the-maze-repo\maze_csv"
+basePath = "./maze_csv"
 
 # Main objective is to convert maze to a .csv file if it is legit
 def generateCsv(maze, fileCount):
 
-    with open(basePath + "\maze" + str(fileCount) + ".csv", "w", newline="") as f:
+    with open(basePath + "/maze" + str(fileCount) + ".csv", "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerows(maze)
 
@@ -21,7 +21,7 @@ def readCsv(fileCount, numRows, numCols):
 
     tempMaze = [["_" for _ in range(numCols)] for _ in range(numRows)]
 
-    with open(basePath + "\maze" + str(fileCount) + ".csv", "rt") as f:
+    with open(basePath + "/maze" + str(fileCount) + ".csv", "rt") as f:
         reader = csv.reader(f)
         # for line in reader:
         #     print("line: " + str(line))
