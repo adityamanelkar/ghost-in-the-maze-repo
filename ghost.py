@@ -4,7 +4,7 @@ import bdbfs
 
 # This code would have all the necessary setup for spawning the ghost(s)
 
-class ghost:
+class Ghost:
 
     def __init__(self, name) -> None:
         self.name = name # typically will be something like "1", "2", etc.
