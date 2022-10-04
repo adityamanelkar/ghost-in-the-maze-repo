@@ -35,9 +35,9 @@ class Agent():
     def isValidMove(self, node, maze, closedSet):
 
         # If we go out of bounds
-        if node[0] < 0 or node[1] < 0 or node[0] > 5 or node[1] > 5:
+        if node[0] < 0 or node[1] < 0 or node[0] >= len(maze) or node[1] >= len(maze[0]):
             return False
-        
+            
         # If cell is blocked
         if maze[node[0]][node[1]] == "b":
             return False
