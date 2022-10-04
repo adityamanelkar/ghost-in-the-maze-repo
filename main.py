@@ -6,6 +6,7 @@ from colorama import init
 from colorama import Fore
 import agent
 import ghost
+import pandas as pd
 
 """
 References:
@@ -29,64 +30,92 @@ def dispMaze(maze):
 
         print("\n")
 
-numRows= 6
-numCols = 6
+numRows= 11
+numCols = 11
 unBlkd = "u"
 blkd = "b"
+firstMaze = 1
+lastMaze = 30
 
-# maze = [["_" for _ in range(numCols)] for _ in range(numRows)]
-maze = [[]]
-
-mainMaze = csvops.readCsv(1, numRows, numCols)
-print("Maze read from maze1.csv is:\n" + str(mainMaze))
-
-tempMaze = mainMaze
-
-# Spawn the ghost(s)
-# For this I may to have take the number of ghosts I am working with and use that to create a list of ghost objects
-# This list will then be used when I want to run the game (like when I need to move the agent and ghosts by steps)
-g1 = ghost.Ghost("1")
-g1.spawnGhost(mainMaze, 6, 6)
-g2 = ghost.Ghost("2")
-g2.spawnGhost(mainMaze, 6, 6)
-
-# Spawn the agent
-a = agent.Agent("agent1")
-
-# Plan a path for the agent
-path = a.planPath(mainMaze, (0, 0), (5, 5))
-printPath = path
-print("The path planned by A* is: " + str(printPath))
+no_of_Ghost = 4
+Agent_No = 1
+survivalList = []
 
 init()
 
-dispMaze(tempMaze)
+# maze = [["_" for _ in range(numCols)] for _ in range(numRows)]
+# maze = [[]]
 
-caught = False
+for mazeNo in range(firstMaze, lastMaze + 1):
 
-# Run the agent/ghost game (based on input params)
-while path and not caught:
-    os.system("clear") 
-    nextCell = path.pop(0)    
-    a.moveAgent(nextCell)
-    tempMaze[a.row][a.col] = "a"
-    if (g1.row == a.row and g1.col == a.col) or (g2.row == a.row and g2.col == a.col):
-        caught = True
-    g1.moveGhost(mainMaze, 6, 6)
-    g2.moveGhost(mainMaze, 6, 6)
-    if (g1.row == a.row and g1.col == a.col) or (g2.row == a.row and g2.col == a.col):
-        caught = True
-    g1Temp = tempMaze[g1.row][g1.col]
-    tempMaze[g1.row][g1.col] = g1.name
-    g2Temp = tempMaze[g2.row][g2.col]
-    tempMaze[g2.row][g2.col] = g2.name
-    dispMaze(tempMaze)
-    tempMaze[a.row][a.col] = "u"
-    tempMaze[g1.row][g1.col] = g1Temp
-    tempMaze[g2.row][g2.col] = g2Temp
-    time.sleep(1)
+    currentMaze = csvops.readCsv(mazeNo, numRows, numCols)
+    # print("Maze read from maze" + str(mazeNo) + ".csv is:\n" + str(currentMaze))
 
-if a.row == a.col == 5:
-    print(Fore.BLUE + "We reached the goal!")
-else:
-    print(Fore.MAGENTA + "The ghost got us :(")
+    # Spawn the ghost(s)
+    # For this I may to have take the number of ghosts I am working with and use that to create a list of ghost objects
+    # This list will then be used when I want to run the game (like when I need to move the agent and ghosts by steps)
+    ghosts = [ghost.Ghost(str(i)) for i in range(no_of_Ghost)]
+
+    for g in ghosts:
+        g.spawnGhost(currentMaze, numRows, numCols)
+
+    # Spawn the agent
+    a = agent.Agent("agent" + str(Agent_No))
+
+    dispMaze(currentMaze)
+
+    # Plan a path for the agent
+    path = a.planPath(currentMaze, (0, 0), (numRows - 1, numCols - 1))
+    print("The path planned by A* is: " + str(path))
+
+    caught = False
+
+    # Run the agent/ghost game (based on input params)
+    while path and not caught:
+        # os.system("clear") 
+        
+        nextCell = path.pop(0)    
+        
+        if a.name == "agent1":
+            a.moveAgent(nextCell)
+        # For other agents movement strategy will differ
+
+        # currentMaze[a.row][a.col] = "a"
+
+        for g in ghosts:
+            if g.row == a.row and g.col == a.col:
+                caught = True
+                break
+
+        for g in ghosts:
+            g.moveGhost(currentMaze, 11, 11)
+
+        for g in ghosts:
+            if g.row == a.row and g.col == a.col:
+                caught = True
+                break
+
+        # g1Temp = currentMaze[g1.row][g1.col]
+        # currentMaze[g1.row][g1.col] = g1.name
+        # g2Temp = currentMaze[g2.row][g2.col]
+        # currentMaze[g2.row][g2.col] = g2.name
+        # dispMaze(currentMaze)
+        # currentMaze[a.row][a.col] = "u"
+        # currentMaze[g1.row][g1.col] = g1Temp
+        # currentMaze[g2.row][g2.col] = g2Temp
+        # time.sleep(1)
+        
+    # End movement
+
+    if a.row == a.col == 10:
+        print(Fore.BLUE + "We reached the goal!")
+        survivalList.append(1)
+    else:
+        print(Fore.MAGENTA + "The ghost got us :(")
+        survivalList.append(0)
+
+df = pd.DataFrame(survivalList)
+df.columns = ["Survivability"]
+
+file_name = "./agent_csv/agent" + str(Agent_No) + "/Ghost" + str(no_of_Ghost) + '.csv'
+df.to_csv(file_name, encoding='utf-8')
