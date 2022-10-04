@@ -44,14 +44,14 @@ def dispMaze(maze):
 # Init variables
 unBlkd = "u"
 blkd = "b"
-numRows= 6
-numCols = 6
+numRows= 11
+numCols = 11
 fileno = 1
 
 # Initialize colorama
 init()
 
-for _ in range(10):
+for _ in range(50):
 
     maze = [[unBlkd for _ in range(numCols)] for _ in range(numRows)] # We initialize the maze to be unblocked
 
