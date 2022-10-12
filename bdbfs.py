@@ -11,7 +11,7 @@ general BFS implementation - https://www.geeksforgeeks.org/breadth-first-travers
 # Check if any common cells exist in the sets of visited cells in either direction
 def isCommonCellAvaialable():
     if visitedSetStart.intersection(visitedSetGoal):
-        print("A common child was found in both BFS directions!")
+        # print("A common child was found in both BFS directions!")
         return True
     else:
         # print("No common child was found yet :(")
@@ -148,10 +148,10 @@ def enterTheDragon(maze, numRows, numCols, lastCell):
 
     # Do a BD BFS from START -> GOAL and simultaneously from GOAL -> START
     if doesPathExist(maze, lastCell):
-        print("A path exists, so one can reach the goal from the start!")
+        # print("A path exists, so one can reach the goal from the start!")
         return True
     else:
-        print("Sadly one cannot span the maze :(")
+        # print("Sadly one cannot span the maze :(")
         return False
 
 """
