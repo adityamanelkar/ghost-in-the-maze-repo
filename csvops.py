@@ -31,7 +31,7 @@ def readCsv(fileCount, numRows, numCols):
             j = 0
             for item in line:
                 tempMaze[i][j] = item.strip()
-                print("tempMaze[" + str(i) + "][" + str(j) + "]: " + str(tempMaze[i][j]))
+                # print("tempMaze[" + str(i) + "][" + str(j) + "]: " + str(tempMaze[i][j]))
                 j += 1
             i += 1
     
