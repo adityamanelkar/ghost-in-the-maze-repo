@@ -2,11 +2,13 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 
-def ploting (Agent_data):
-    x = [i+1 for i in range(len(Agent_data)) ]
+def ploting (Agent_data, ghostStart, maxGhosts, stepGhosts):
+    x = [i for i in range(ghostStart, maxGhosts + 1, stepGhosts)]
     y = Agent_data
     plt.plot(x, y, marker='o', color='r')
     plt.xticks(x)
+    for i, j in zip(x, y):
+        plt.text(i, j + 0.005, "({}, {})".format(i, round(j, 2)))
     plt.xlabel('No. of Ghosts')
     plt.ylabel('Agent_Survivablity')
     plt.title("Survivability vs Ghost Density")
@@ -14,13 +16,16 @@ def ploting (Agent_data):
 
 Agent_data = []
 
-Agent_No = int(input("Enter Agent No.: "))
-no_of_ghost = int(input("Enter the Range No. of Ghosts: "))
+agentNum = int(input("Enter the agent number: "))
+maxGhosts = int(input("Enter the max number of ghosts that you want to cram data for: "))
+stepGhosts = int(input("Enter the step size for increamenting number of ghosts: "))
+ghostStart = 0
+ghostStart += stepGhosts
 
-for i in range(1, no_of_ghost + 1):
-    filepath = "./agent_csv/agent" + str(Agent_No) + "/Ghost" + str(i) + ".csv"
+for i in range(ghostStart, maxGhosts + 1, stepGhosts):
+    filepath = "./agent_csv/agent" + str(agentNum) + "/Ghost" + str(i) + ".csv"
     df = pd.read_csv(filepath)
     avg_survivability = df["Survivability"].mean()
     Agent_data.append(avg_survivability)
 
-ploting(Agent_data)
+ploting(Agent_data, ghostStart, maxGhosts, stepGhosts)
