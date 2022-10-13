@@ -48,7 +48,7 @@ class Agent():
         # print(self.hueristics)
 
     def calcHeuristics(self, maze, start, goal) -> int:
-        """s
+        """
         Uses BD BFS to find the optimal path path from any cell to goal
         """
 
@@ -143,7 +143,7 @@ class Agent():
             totalPath.append(current)
         return totalPath[::-1]
 
-    def isValidMove(self, node, maze, closedSet):
+    def isValidMove(self, node, maze, closedSet, ghostSet=set([])):
 
         # If we go out of bounds
         if node[0] < 0 or node[1] < 0 or node[0] >= len(maze) or node[1] >= len(maze[0]):
@@ -155,6 +155,9 @@ class Agent():
         
         # If cell is already added to the closedSet
         if closedSet.intersection({node}):
+            return False
+        
+        if ghostSet.intersection({node}):
             return False
 
         # If not none of the above situations arise, the cell can be added!
@@ -172,7 +175,7 @@ class Agent():
         """
         return math.sqrt(((current[0] - goal[0]) ** 2) + ((current[1] - goal[1]) ** 2))
 
-    def planPath(self, maze, start, goal) -> list:
+    def planPath(self, maze, start, goal, ghostSet) -> list:
         # The set of discovered nodes that may need to be (re-)expanded.
         # Initially, only the start node is known.
         # This is usually implemented as a min-heap or priority queue rather than a hash-set.
@@ -223,7 +226,7 @@ class Agent():
             for i in range(4):
                 neighbor = (current[0] + xDelta[i], current[1] + yDelta[i])
 
-                if self.isValidMove(neighbor, maze, closedSet):
+                if self.isValidMove(neighbor, maze, closedSet, ghostSet):
                     # d(current,neighbor) is the weight of the edge from current to neighbor
                     # tentative_gScore is the distance from start to the neighbor through current
                     gScoreTentative = gScore[current] + 1 # 1 = d(current,neighbor) = step size here
