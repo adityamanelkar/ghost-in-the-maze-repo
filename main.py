@@ -41,10 +41,6 @@ def findChildren(maze, a, ghosts) -> list:
             continue
 
         # If there is a ghost in the cell
-        if maze[child[0]][child[1]] == "b":
-            continue
-
-        # If not none of the above situations arise, the cell can be added!
         for ghost in ghosts:
             if child == (ghost.row, ghost.col):
                 breakCnt += 1
@@ -71,6 +67,8 @@ def monteCarlo(maze, a, children, gs, agentBasis="agent2") -> tuple:
     bestChild = (a.row, a.col)
     maxUtility = 0
 
+    ghostSet = set([])
+
     if agentBasis == "agent2":
         
         for child in children:
@@ -94,13 +92,14 @@ def monteCarlo(maze, a, children, gs, agentBasis="agent2") -> tuple:
 
                 for simGhost in simGhosts:
                     simGhost.moveGhost(maze, numRows, numCols) # Simulate moving the ghosts once as wel
+                    ghostSet.add((simGhost.row, simGhost.col))
 
                 for simGhost in simGhosts:
                     if simGhost.row == simA.row and simGhost.col == simA.col:
                         caught = True
 
                 # Plan a path for the agent
-                path = simA.planPath(maze, child, (numRows - 1, numCols - 1))
+                path = simA.planPath(maze, child, (numRows - 1, numCols - 1), ghostSet)
                 # print("The path planned by A* is: " + str(path))
 
                 # Resetting timeSteps (an upper bound of 1000) which is used to make sure agent isn't avoiding ghosts forever
@@ -113,7 +112,7 @@ def monteCarlo(maze, a, children, gs, agentBasis="agent2") -> tuple:
                     timeSteps += 1
 
                     if simA.doWeReplan(path, simGhosts):
-                        path = simA.planPath(maze, (simA.row, simA.col), (numRows - 1, numCols - 1))
+                        path = simA.planPath(maze, (simA.row, simA.col), (numRows - 1, numCols - 1), ghostSet)
                         # print("[AGENT 2 SIM " + str(i) + " from " + str(child) + "] Path (post replanning) = " + str(path))
                         if len(path) > 0:
                             nextCell = path.pop(0)
@@ -149,6 +148,9 @@ def monteCarlo(maze, a, children, gs, agentBasis="agent2") -> tuple:
                     utilityList.append(1)
                 else:
                     utilityList.append(0)
+                
+                del simA
+                del simGhosts
                 
             utility[child] = sum(utilityList) / len(utilityList)
             # print(utility[child])
@@ -234,8 +236,11 @@ for numGhosts in range(ghostStart, maxGhosts + 1, stepGhosts):
         # This list will then be used when I want to run the game (like when I need to move the agent and ghosts by steps)
         ghosts = [ghost.Ghost(str(i)) for i in range(numGhosts)]
 
+        ghostSet = set([])
+
         for g in ghosts:
             g.spawnGhost(currentMaze, numRows, numCols)
+            ghostSet.add((g.row, g.col))
 
         # Spawn the agent
         a = agent.Agent("agent" + str(agentNum))
@@ -245,7 +250,7 @@ for numGhosts in range(ghostStart, maxGhosts + 1, stepGhosts):
         # print("FINISHED a.getBaseHeuristics()")
 
         # Plan a path for the agent
-        path = a.planPath(currentMaze, (0, 0), (numRows - 1, numCols - 1))
+        path = a.planPath(currentMaze, (0, 0), (numRows - 1, numCols - 1), ghostSet)
         # print("The path planned by A* is: " + str(path))
 
         # By default set the agent as not caught
@@ -266,7 +271,7 @@ for numGhosts in range(ghostStart, maxGhosts + 1, stepGhosts):
             
             elif a.name == "agent2":
                 if a.doWeReplan(path, ghosts):
-                    path = a.planPath(currentMaze, (a.row, a.col), (numRows - 1, numCols - 1))
+                    path = a.planPath(currentMaze, (a.row, a.col), (numRows - 1, numCols - 1), ghostSet)
                     # print("[AGENT 2] Path (post replanning) = " + str(path))
                     if len(path) > 0:
                         nextCell = path.pop(0)
@@ -291,7 +296,7 @@ for numGhosts in range(ghostStart, maxGhosts + 1, stepGhosts):
                         a.moveAgent(nextCell)
                     else: # Behave exactly like agent 2
                         if a.doWeReplan(path, ghosts):
-                            path = a.planPath(currentMaze, (a.row, a.col), (numRows - 1, numCols - 1))
+                            path = a.planPath(currentMaze, (a.row, a.col), (numRows - 1, numCols - 1), ghostSet)
                             # print("[AGENT 2] Path (post replanning) = " + str(path))
                             if len(path) > 0:
                                 nextCell = path.pop(0)
@@ -320,9 +325,12 @@ for numGhosts in range(ghostStart, maxGhosts + 1, stepGhosts):
                     caught = True
                     break
 
+            ghostSet = set([])
+
             for g in ghosts:
                 g.moveGhost(currentMaze, numRows, numCols)
-
+                ghostSet.add((g.row, g.col))
+                
             for g in ghosts:
                 if g.row == a.row and g.col == a.col:
                     caught = True
