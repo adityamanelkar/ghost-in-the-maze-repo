@@ -173,13 +173,13 @@ def dispMaze(maze) -> None:
     for i in range(numRows):
         for j in range(numCols):
             if (maze[i][j] == unBlkd): # Green for 'u'nblocked cells 
-                print(Fore.GREEN + str(maze[i][j]), end=" ")
+                print(Fore.BLACK + str(maze[i][j]), end=" ")
             elif (maze[i][j] == blkd): # Red for 'b'locked cells
-                print(Fore.RED + str(maze[i][j]), end=" ")
-            elif (maze[i][j] == "a"):
-                print(Fore.YELLOW + str(maze[i][j]), end=" ") 
-            else: # For ghosts
                 print(Fore.WHITE + str(maze[i][j]), end=" ")
+            elif (maze[i][j] == "a"):
+                print(Fore.GREEN + str(maze[i][j]), end=" ") 
+            else: # For ghosts
+                print(Fore.RED + str(maze[i][j]), end=" ")
 
         print("\n")
 
@@ -228,6 +228,11 @@ for numGhosts in range(ghostStart, maxGhosts + 1, stepGhosts):
 
         currentMaze = csvops.readCsv(mazeNo, numRows, numCols)
         # print("Maze read from maze" + str(mazeNo) + ".csv is:\n" + str(currentMaze))
+
+        """
+        Used tempMaze for visualizing the agent and ghost paths (dynamically and static as well)
+        """
+        # tempMaze = copy.deepcopy(currentMaze)
 
         # dispMaze(currentMaze)
         
@@ -318,7 +323,10 @@ for numGhosts in range(ghostStart, maxGhosts + 1, stepGhosts):
             else: # Other agents
                 pass
 
-            # currentMaze[a.row][a.col] = "a"
+            """
+            For visualization of agent
+            """
+            # tempMaze[a.row][a.col] = "a"
 
             for g in ghosts:
                 if g.row == a.row and g.col == a.col:
@@ -336,17 +344,26 @@ for numGhosts in range(ghostStart, maxGhosts + 1, stepGhosts):
                     caught = True
                     break
 
-            # g1Temp = currentMaze[g1.row][g1.col]
-            # currentMaze[g1.row][g1.col] = g1.name
-            # g2Temp = currentMaze[g2.row][g2.col]
-            # currentMaze[g2.row][g2.col] = g2.name
-            # dispMaze(currentMaze)
-            # currentMaze[a.row][a.col] = "u"
-            # currentMaze[g1.row][g1.col] = g1Temp
-            # currentMaze[g2.row][g2.col] = g2Temp
-            # time.sleep(1)
+            """
+            For visualization of ghosts
+            """
+            # for g in ghosts:
+            #     tempMaze[g.row][g.col] = g.name
             
+            """
+            For a live simulation of agent and ghost movements
+            """
+            # dispMaze(tempMaze)
+            # time.sleep(1)
+            # del tempMaze
+            # tempMaze = copy.deepcopy(currentMaze)
+
         # End movement
+
+        """
+        For end state diagram of agent and ghost paths throughout the maze
+        """
+        # dispMaze(tempMaze)
 
         if a.row == numRows - 1 and a.col == numCols - 1:
             print(Fore.BLUE + "We reached the goal!")
