@@ -325,6 +325,8 @@ for numGhosts in range(ghostStart, maxGhosts + 1, stepGhosts):
 
             """
             For visualization of agent
+            (1) Make sure to uncomment the initialization of tempMaze above
+            (2) Uncomment the below line for displaying agent path
             """
             # tempMaze[a.row][a.col] = "a"
 
@@ -346,12 +348,16 @@ for numGhosts in range(ghostStart, maxGhosts + 1, stepGhosts):
 
             """
             For visualization of ghosts
+            (1) Make sure to uncomment the initialization of tempMaze above
+            (2) Uncomment the below line for displaying ghost paths
             """
             # for g in ghosts:
             #     tempMaze[g.row][g.col] = g.name
             
             """
             For a live simulation of agent and ghost movements
+            (1) Make sure to uncomment the initialization of tempMaze above
+            (2) Uncomment the below lines to display the run second-by-second
             """
             # dispMaze(tempMaze)
             # time.sleep(1)
@@ -362,6 +368,9 @@ for numGhosts in range(ghostStart, maxGhosts + 1, stepGhosts):
 
         """
         For end state diagram of agent and ghost paths throughout the maze
+        (1) Make sure to uncomment the initialization of tempMaze and display assignments
+        that set the agent and ghosts in tempMaze
+        (2) Naturally, also uncomment the below line
         """
         # dispMaze(tempMaze)
 
