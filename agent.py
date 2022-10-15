@@ -240,7 +240,182 @@ class Agent():
 
         # Open set is empty but goal was never reached
         return []
-    
+
+    def calcStepWeight(self, maze, node, ghostSet, invisibleCheck="False") -> int:
+        """
+        Here we want to add different wights so that certain cells around the ghost are
+        generally discouraged/penalized (but not completely blocked out)
+
+        As a part of agent 4 changes, we believe that this will help get better paths
+        (which are not optimal, but which would generally help reduce replanning)
+
+        For starters, we want to increase the weight of cells diagonally around ghosts
+        to weights of "2" or more and those in horizontal and vertical cells around ghosts to
+        weights of "3" or more. These will be used instead of the existing default weight of "1"
+
+        For agent 5 specifically, invisibleCheck would be set to true - so now the ghosts in walls
+        will just be skipped altogether
+        """
+
+        straightX = [0, 1, 0, -1]
+        straightY = [1, 0, -1, 0]
+
+        diagonalX = [1, -1, 1, -1]
+        diagonalY = [1, 1, -1, -1]
+
+        weight = 1 # Default weight
+
+        for g in ghostSet:
+
+            # For agent 5 if the ghost is in a blocked cell then we don't wanna check for weights
+            if invisibleCheck and maze[g[0]][g[1]] == "b":
+                continue
+
+            for i in range(4):
+
+                # Add an additional penalty weight 4
+                if node == (g[0] + straightX[i], g[1] + straightY[i]):
+                    weight += 2
+
+                # Add an additional penalty weight 2
+                if node == (g[0] + diagonalX[i], g[1] + diagonalY[i]):
+                    weight += 1
+
+        # Return the cumulative weight
+        return weight
+
+    def planWeightedPathVisible(self, maze, start, goal, ghostSet) -> list:
+        # The set of discovered nodes that may need to be (re-)expanded.
+        # Initially, only the start node is known.
+        # This is usually implemented as a min-heap or priority queue rather than a hash-set.
+        openSet = [start]
+        closedSet = set([])
+        infinity = math.inf
+
+        # For node n, cameFrom[n] is the node immediately preceding it on the cheapest path from start
+        # to n currently known.
+        cameFrom = {}
+        gScore = {}
+        fScore = {}
+
+        xDelta = [0, 1, 0, -1]
+        yDelta = [1, 0, -1, 0]
+
+        for i in range(goal[0] + 1):
+            for j in range(goal[1] + 1):
+                # For node n, gScore[n] is the cost of the cheapest path from start to n currently known.
+                gScore[(i, j)] = infinity # map with default value of Infinity
+                # For node n, fScore[n] := gScore[n] + h(n). fScore[n] represents our current best guess as to
+                # how cheap a path could be from start to finish if it goes through n.
+                fScore[(i, j)] = infinity # map with default value of Infinity
+
+        gScore[start] = 0
+        fScore[start] = self.hueristics[start]
+
+        while openSet:
+            # This operation can occur in O(Log(N)) time if openSet is a min-heap or a priority queue
+            # current := the node in openSet having the lowest fScore[] value !!!!!
+
+            # Get the current node
+            current = openSet[0]
+            curIdx = 0
+
+            for idx, item in enumerate(openSet):
+                if fScore[item] < fScore[current]:
+                    current = item
+                    curIdx = idx
+
+            # Pop current off open list, add to closed list
+            current = openSet.pop(curIdx)
+            closedSet.add(current)
+
+            if current == goal:
+                return self.createPath(cameFrom, current) # This returns the best path found through a*
+
+            for i in range(4):
+                neighbor = (current[0] + xDelta[i], current[1] + yDelta[i])
+
+                if self.isValidMove(neighbor, maze, closedSet, ghostSet):
+                    # d(current,neighbor) is the weight of the edge from current to neighbor
+                    # tentative_gScore is the distance from start to the neighbor through current
+                    gScoreTentative = gScore[current] + self.calcStepWeight(maze, neighbor, ghostSet, invisibleCheck="True") # 1 = d(current,neighbor) = default step size here
+                    if gScoreTentative < gScore[neighbor]:
+                        # This path to neighbor is better than any previous one. Record it!
+                        cameFrom[neighbor] = current
+                        gScore[neighbor] = gScoreTentative
+                        fScore[neighbor] = gScoreTentative + self.hueristics[neighbor]
+                        if neighbor not in openSet:
+                            openSet.append(neighbor)
+
+        # Open set is empty but goal was never reached
+        return []
+
+    def planWeightedPath(self, maze, start, goal, ghostSet) -> list:
+        # The set of discovered nodes that may need to be (re-)expanded.
+        # Initially, only the start node is known.
+        # This is usually implemented as a min-heap or priority queue rather than a hash-set.
+        openSet = [start]
+        closedSet = set([])
+        infinity = math.inf
+
+        # For node n, cameFrom[n] is the node immediately preceding it on the cheapest path from start
+        # to n currently known.
+        cameFrom = {}
+        gScore = {}
+        fScore = {}
+
+        xDelta = [0, 1, 0, -1]
+        yDelta = [1, 0, -1, 0]
+
+        for i in range(goal[0] + 1):
+            for j in range(goal[1] + 1):
+                # For node n, gScore[n] is the cost of the cheapest path from start to n currently known.
+                gScore[(i, j)] = infinity # map with default value of Infinity
+                # For node n, fScore[n] := gScore[n] + h(n). fScore[n] represents our current best guess as to
+                # how cheap a path could be from start to finish if it goes through n.
+                fScore[(i, j)] = infinity # map with default value of Infinity
+
+        gScore[start] = 0
+        fScore[start] = self.hueristics[start]
+
+        while openSet:
+            # This operation can occur in O(Log(N)) time if openSet is a min-heap or a priority queue
+            # current := the node in openSet having the lowest fScore[] value !!!!!
+
+            # Get the current node
+            current = openSet[0]
+            curIdx = 0
+
+            for idx, item in enumerate(openSet):
+                if fScore[item] < fScore[current]:
+                    current = item
+                    curIdx = idx
+
+            # Pop current off open list, add to closed list
+            current = openSet.pop(curIdx)
+            closedSet.add(current)
+
+            if current == goal:
+                return self.createPath(cameFrom, current) # This returns the best path found through a*
+
+            for i in range(4):
+                neighbor = (current[0] + xDelta[i], current[1] + yDelta[i])
+
+                if self.isValidMove(neighbor, maze, closedSet, ghostSet):
+                    # d(current,neighbor) is the weight of the edge from current to neighbor
+                    # tentative_gScore is the distance from start to the neighbor through current
+                    gScoreTentative = gScore[current] + self.calcStepWeight(maze, neighbor, ghostSet) # 1 = d(current,neighbor) = default step size here
+                    if gScoreTentative < gScore[neighbor]:
+                        # This path to neighbor is better than any previous one. Record it!
+                        cameFrom[neighbor] = current
+                        gScore[neighbor] = gScoreTentative
+                        fScore[neighbor] = gScoreTentative + self.hueristics[neighbor]
+                        if neighbor not in openSet:
+                            openSet.append(neighbor)
+
+        # Open set is empty but goal was never reached
+        return []
+
     def stayAwayFromGhosts(self, currentMaze, ghosts) -> tuple:
 
         infinity = math.inf
