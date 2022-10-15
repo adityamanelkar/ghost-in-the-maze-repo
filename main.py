@@ -1,7 +1,5 @@
 #!/usr/bin/python
 import csvops
-import time
-import os
 import math
 import copy
 from colorama import init
@@ -52,7 +50,7 @@ def findChildren(maze, a, ghosts) -> list:
     return children
 
 # Find utility values for children
-def monteCarlo(maze, a, children, gs, agentBasis="agent2") -> tuple:
+def monteCarlo(maze, a, children, gs, agentBasis="agent3", maxSteps=1001) -> tuple:
     """
     Compare utilities for each of the children of a and return the coordinates of the child w/ highest utility
     """
@@ -69,8 +67,8 @@ def monteCarlo(maze, a, children, gs, agentBasis="agent2") -> tuple:
 
     ghostSet = set([])
 
-    if agentBasis == "agent2":
-        
+    if agentBasis == "agent3" or agentBasis == "agent4" or agentBasis == "agent5":
+
         for child in children:
 
             utilityList = []
@@ -99,27 +97,41 @@ def monteCarlo(maze, a, children, gs, agentBasis="agent2") -> tuple:
                         caught = True
 
                 # Plan a path for the agent
-                path = simA.planPath(maze, child, (numRows - 1, numCols - 1), ghostSet)
+                if agentBasis == "agent3":
+                    path = simA.planPath(maze, child, (numRows - 1, numCols - 1), ghostSet)
+                elif agentBasis == "agent4":
+                    path = simA.planWeightedPath(maze, child, (numRows - 1, numCols - 1), ghostSet)
+                elif agentBasis == "agent5":
+                    path = simA.planWeightedPathVisible(maze, child, (numRows - 1, numCols - 1), ghostSet)
                 # print("The path planned by A* is: " + str(path))
 
                 # Resetting timeSteps (an upper bound of 1000) which is used to make sure agent isn't avoiding ghosts forever
                 timeSteps = 0
 
                 # Run the agent/ghost game (based on input params)
-                while path and not caught and timeSteps < 1000:
+                while path and not caught and timeSteps < maxSteps:
                     # os.system("clear")
 
                     timeSteps += 1
 
                     if simA.doWeReplan(path, simGhosts):
-                        path = simA.planPath(maze, (simA.row, simA.col), (numRows - 1, numCols - 1), ghostSet)
+
+                        if agentBasis == "agent3":
+                            path = simA.planPath(maze, (simA.row, simA.col), (numRows - 1, numCols - 1), ghostSet)
+                        elif agentBasis == "agent4":
+                            path = simA.planWeightedPath(maze, (simA.row, simA.col), (numRows - 1, numCols - 1), ghostSet)
+                        elif agentBasis == "agent5":
+                            path = simA.planWeightedPathVisible(maze, (simA.row, simA.col), (numRows - 1, numCols - 1), ghostSet)
                         # print("[AGENT 2 SIM " + str(i) + " from " + str(child) + "] Path (post replanning) = " + str(path))
                         if len(path) > 0:
                             nextCell = path.pop(0)
                             # print("[AGENT 2 SIM " + str(i) + " from " + str(child) + "] nextCell (post replanning) = " + str(nextCell))
                             simA.moveAgent(nextCell)
                         elif (simA.row, simA.col) != (numRows - 1, numCols - 1): # If ghosts are blocking all available paths
-                            nextCell = simA.stayAwayFromGhosts(maze, simGhosts)
+                            if agentBasis == "agent5":
+                                nextCell = simA.stayAwayFromGhosts(maze, simGhosts)
+                            else:
+                                nextCell = simA.stayAwayFromGhosts(maze, simGhosts)
                             # print("[AGENT 2 SIM " + str(i) + " from " + str(child) + "] nextCell (avoiding ghosts) = " + str(nextCell))
                             simA.moveAgent(nextCell)
                     else: # No replanning required
@@ -155,16 +167,19 @@ def monteCarlo(maze, a, children, gs, agentBasis="agent2") -> tuple:
             utility[child] = sum(utilityList) / len(utilityList)
             # print(utility[child])
 
-            if utility[child] > maxUtility:
-                maxUtility = utility[child]
-                bestChild = child
+        if utility[child] > maxUtility:
+            maxUtility = utility[child]
+            bestChild = child
 
         # print("[AGENT 2 SIM] best child is {bc} and the it's utility is {ut}".format(bc = bestChild, ut = maxUtility))
 
-        if maxUtility > 0.50: # We want to use the maxUtility only if it is worth it
+        if maxUtility > 0.50 and agentBasis == "agent3": # We want to use the maxUtility only if it is worth it
             return bestChild
 
-    # if agentBasis is not agent2 then return bestChild as current a position
+        if maxUtility > 0 and (agentBasis == "agent4" or agentBasis == "agent5"): # in agents 4 and 5 we don't care, as long as a path exists we'll try
+            return bestChild
+
+    # By default return bestChild as current "a" position
     return (a.row, a.col)
 
 
@@ -213,6 +228,10 @@ init()
 for numGhosts in range(ghostStart, maxGhosts + 1, stepGhosts):
 
     survivalList = []
+
+    # Determine the max timesteps we will take trying to move the agent
+    # It is equivalent to the max number of steps an agent will take per maze run
+    maxSteps = 2500 # This was set to 1000 for agents 1 to 3 and updated to 2500 for agent 4 as an improvement
 
     tempFirstMaze = tempLastMaze + 1
 
@@ -265,7 +284,7 @@ for numGhosts in range(ghostStart, maxGhosts + 1, stepGhosts):
         timeSteps = 0
 
         # Run the agent/ghost game (based on input params)
-        while path and not caught and (a.row, a.col) != (numRows - 1, numCols - 1) and timeSteps < 1001:
+        while path and not caught and (a.row, a.col) != (numRows - 1, numCols - 1) and timeSteps < maxSteps:
             # os.system("clear")
 
             timeSteps += 1
@@ -295,7 +314,7 @@ for numGhosts in range(ghostStart, maxGhosts + 1, stepGhosts):
                 # print("[AGENT 3] Calculate utilities")
                 children = findChildren(currentMaze, a, ghosts)
                 if children: # if there are any find child with best utility
-                    nextCell = monteCarlo(currentMaze, a, children, ghosts, agentBasis="agent2")
+                    nextCell = monteCarlo(currentMaze, a, children, ghosts, "agent3", maxSteps)
                     # print("[AGENT 3] nextCell (post utility calc) = " + str(nextCell))
                     if nextCell != (a.row, a.col):
                         a.moveAgent(nextCell)
@@ -320,11 +339,69 @@ for numGhosts in range(ghostStart, maxGhosts + 1, stepGhosts):
                     # print("[AGENT 3] nextCell (avoiding ghosts) = " + str(nextCell))
                     a.moveAgent(nextCell)
 
+            elif a.name == "agent4":
+                # print("[AGENT 4] Calculate utilities")
+                children = findChildren(currentMaze, a, ghosts)
+                if children: # if there are any find child with best utility
+                    nextCell = monteCarlo(currentMaze, a, children, ghosts, "agent4", maxSteps)
+                    # print("[AGENT 4] nextCell (post utility calc) = " + str(nextCell))
+                    if nextCell != (a.row, a.col):
+                        a.moveAgent(nextCell)
+                    else: # Behave exactly like agent 2 BUT WITH WEIGHTED PATH CALCULATION
+                        if a.doWeReplan(path, ghosts):
+                            path = a.planWeightedPath(currentMaze, (a.row, a.col), (numRows - 1, numCols - 1), ghostSet)
+                            # print("[AGENT 4] Path (post replanning) = " + str(path))
+                            if len(path) > 0:
+                                nextCell = path.pop(0)
+                                # print("[AGENT 4] nextCell (post replanning) = " + str(nextCell))
+                                a.moveAgent(nextCell)
+                            elif (a.row, a.col) != (numRows - 1, numCols - 1): # If ghosts are blocking all available paths
+                                nextCell = a.stayAwayFromGhosts(currentMaze, ghosts)
+                                # print("[AGENT 4] nextCell (avoiding ghosts) = " + str(nextCell))
+                                a.moveAgent(nextCell)
+                        else: # No replanning required
+                            nextCell = path.pop(0)
+                            # print("[AGENT 4] Path (no replanning) = " + str(path))
+                            a.moveAgent(nextCell)
+                else: # No children were found
+                    nextCell = a.stayAwayFromGhosts(currentMaze, ghosts)
+                    # print("[AGENT 4] nextCell (avoiding ghosts) = " + str(nextCell))
+                    a.moveAgent(nextCell)
+
+            elif a.name == "agent5":
+                # print("[AGENT 5] Calculate utilities")
+                children = findChildren(currentMaze, a, ghosts)
+                if children: # if there are any find child with best utility
+                    nextCell = monteCarlo(currentMaze, a, children, ghosts, "agent5", maxSteps)
+                    # print("[AGENT 5] nextCell (post utility calc) = " + str(nextCell))
+                    if nextCell != (a.row, a.col):
+                        a.moveAgent(nextCell)
+                    else: # Behave exactly like agent 2 BUT WITH WEIGHTED PATH CALCULATION
+                        if a.doWeReplan(path, ghosts):
+                            path = a.planWeightedPathVisible(currentMaze, (a.row, a.col), (numRows - 1, numCols - 1), ghostSet)
+                            # print("[AGENT 5] Path (post replanning) = " + str(path))
+                            if len(path) > 0:
+                                nextCell = path.pop(0)
+                                # print("[AGENT 5] nextCell (post replanning) = " + str(nextCell))
+                                a.moveAgent(nextCell)
+                            elif (a.row, a.col) != (numRows - 1, numCols - 1): # If ghosts are blocking all available paths
+                                nextCell = a.stayAwayFromGhosts(currentMaze, ghosts)
+                                # print("[AGENT 5] nextCell (avoiding ghosts) = " + str(nextCell))
+                                a.moveAgent(nextCell)
+                        else: # No replanning required
+                            nextCell = path.pop(0)
+                            # print("[AGENT 5] Path (no replanning) = " + str(path))
+                            a.moveAgent(nextCell)
+                else: # No children were found
+                    nextCell = a.stayAwayFromGhosts(currentMaze, ghosts)
+                    # print("[AGENT 5] nextCell (avoiding ghosts) = " + str(nextCell))
+                    a.moveAgent(nextCell)
+
             else: # Other agents
                 pass
 
             """
-            For visualization of agent
+            For visualization of agent movement/path
             (1) Make sure to uncomment the initialization of tempMaze above
             (2) Uncomment the below line for displaying agent path
             """
@@ -347,7 +424,7 @@ for numGhosts in range(ghostStart, maxGhosts + 1, stepGhosts):
                     break
 
             """
-            For visualization of ghosts
+            For visualization of ghosts movement/paths
             (1) Make sure to uncomment the initialization of tempMaze above
             (2) Uncomment the below line for displaying ghost paths
             """
